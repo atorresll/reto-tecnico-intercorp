@@ -9,5 +9,5 @@ const app = new cdk.App();
 const env = { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION };
 const database = new DatabaseStack(app, 'EndorsementDatabaseStack', { env });
 const auth = new AuthStack(app, 'EndorsementAuthStack', { env });
-const backend = new BackendStack(app, 'EndorsementBackendStack', { env, table: database.table, userPool: auth.userPool });
+const backend = new BackendStack(app, 'EndorsementBackendStack', { env, table: database.table });
 new FrontendStack(app, 'EndorsementFrontendStack', { env, apiUrl: backend.apiUrl });
