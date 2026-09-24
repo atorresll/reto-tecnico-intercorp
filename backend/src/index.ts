@@ -5,6 +5,12 @@ import serverlessExpress from '@vendia/serverless-express';
 import { registerEndorsementRoutes } from './routes/endorsement.routes';
 import { DynamoMappingRepository } from './repository/mapping.repository';
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+  'Access-Control-Allow-Methods': 'OPTIONS,POST',
+};
+
 const server = Hapi.server({ port: 0 });
 registerEndorsementRoutes(server, new DynamoMappingRepository());
 
@@ -29,12 +35,13 @@ const initializeHandler = async () => {
       }
       response.end(typeof result.result === 'string' ? result.result : JSON.stringify(result.result ?? {}));
     } catch (error) {
-      console.error('Error procesando la solicitud de endoso', error);
+      const executionError = error instanceof Error ? error : new Error(String(error));
+      console.error('EXECUTION ERROR:', executionError.message, executionError.stack);
       response.statusCode = 400;
       response.setHeader('content-type', 'application/json');
-      response.setHeader('Access-Control-Allow-Origin', '*');
-      response.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
-      response.setHeader('Access-Control-Allow-Methods', 'OPTIONS,POST');
+      for (const [name, value] of Object.entries(corsHeaders)) {
+        response.setHeader(name, value);
+      }
       response.end(JSON.stringify({ message: 'Error al procesar el endoso o registro no encontrado' }));
     }
   };
@@ -44,6 +51,27 @@ const initializeHandler = async () => {
 };
 
 export const handler: APIGatewayProxyHandler = async (event, context: Context) => {
-  expressHandler ??= await initializeHandler();
-  return (await expressHandler(event, context, () => undefined)) as APIGatewayProxyResult;
+  console.log('INCOMING EVENT:', JSON.stringify(event, null, 2));
+  try {
+    expressHandler ??= await initializeHandler();
+    const response = (await expressHandler(event, context, () => undefined)) as APIGatewayProxyResult;
+    const outgoingResponse: APIGatewayProxyResult = {
+      ...response,
+      headers: { ...corsHeaders, ...(response.headers ?? {}) },
+    };
+    console.log('OUTGOING RESPONSE:', JSON.stringify(outgoingResponse, null, 2));
+    return outgoingResponse;
+  } catch (error) {
+    const executionError = error instanceof Error ? error : new Error(String(error));
+    console.error('EXECUTION ERROR:', executionError.message, executionError.stack);
+    const response: APIGatewayProxyResult = {
+      statusCode: 500,
+      headers: corsHeaders,
+      body: JSON.stringify({
+        message: 'Error al procesar el endoso o registro no encontrado',
+      }),
+    };
+    console.log('OUTGOING RESPONSE:', JSON.stringify(response, null, 2));
+    return response;
+  }
 };
