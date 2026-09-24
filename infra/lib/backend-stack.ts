@@ -16,10 +16,12 @@ export class BackendStack extends cdk.Stack {
       timeout: cdk.Duration.seconds(15),
       memorySize: 512,
       logRetention: logs.RetentionDays.ONE_MONTH,
-      environment: { TABLE_NAME: props.table.tableName },
+      environment: {
+        TABLE_NAME: props.table.tableName,
+      },
       bundling: { minify: true, sourceMap: true, target: 'node24' },
     });
-    props.table.grantWriteData(fn);
+    props.table.grantReadData(fn);
     const api = new apigateway.RestApi(this, 'EndorsementApi', {
       restApiName: 'EndorsementApi',
       deployOptions: { stageName: 'v1', tracingEnabled: true, loggingLevel: apigateway.MethodLoggingLevel.ERROR },
@@ -30,6 +32,17 @@ export class BackendStack extends cdk.Stack {
       authorizationType: apigateway.AuthorizationType.COGNITO,
       authorizer,
     });
+    for (const [id, type] of [['Default4xx', apigateway.ResponseType.DEFAULT_4XX], ['Default5xx', apigateway.ResponseType.DEFAULT_5XX]] as const) {
+      new apigateway.GatewayResponse(this, id, {
+        restApi: api,
+        type,
+        responseHeaders: {
+          'Access-Control-Allow-Origin': "'*'",
+          'Access-Control-Allow-Headers': "'Content-Type,Authorization'",
+          'Access-Control-Allow-Methods': "'OPTIONS,POST'",
+        },
+      });
+    }
     this.apiUrl = api.url.replace(/\/$/, '');
     new cdk.CfnOutput(this, 'ApiUrl', { value: this.apiUrl });
   }

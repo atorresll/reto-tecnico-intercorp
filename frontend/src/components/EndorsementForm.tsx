@@ -6,19 +6,19 @@ import './EndorsementForm.css';
 const fields: Array<{
   name: keyof EndorsementFormInput;
   label: string;
-  type?: 'text' | 'number' | 'email' | 'date';
+  placeholder?: string;
 }> = [
   { name: 'policyNumber', label: 'Número de póliza' },
-  { name: 'idEnvio', label: 'ID de envío', type: 'number' },
+  { name: 'idEnvio', label: 'ID de envío' },
   { name: 'frecuencia', label: 'Frecuencia' },
   { name: 'tipoEndoso', label: 'Tipo de endoso' },
   { name: 'producto', label: 'Producto' },
   { name: 'plan', label: 'Plan' },
   { name: 'moneda', label: 'Moneda' },
-  { name: 'usuario', label: 'Usuario / correo', type: 'email' },
-  { name: 'fechaSolicitud', label: 'Fecha de solicitud', type: 'date' },
-  { name: 'fechaCliente', label: 'Fecha del cliente', type: 'date' },
-  { name: 'fechaEfectiva', label: 'Fecha efectiva', type: 'date' },
+  { name: 'usuario', label: 'Usuario' },
+  { name: 'fechaSolicitud', label: 'Fecha de solicitud', placeholder: 'YYYY-MM-DD' },
+  { name: 'fechaCliente', label: 'Fecha del cliente', placeholder: 'YYYY-MM-DD' },
+  { name: 'fechaEfectiva', label: 'Fecha efectiva', placeholder: 'YYYY-MM-DD' },
 ];
 
 export function EndorsementForm({ service }: { service: EndorsementService }) {
@@ -41,17 +41,18 @@ export function EndorsementForm({ service }: { service: EndorsementService }) {
 
         <form className="endorsement-form" onSubmit={submit} noValidate>
           <div className="form-grid">
-            {fields.map(({ name, label, type = 'text' }) => {
+            {fields.map(({ name, label, placeholder }) => {
               const error = errors[name];
               return (
                 <div className="field" key={name}>
                   <label htmlFor={name}>{label}<span aria-hidden="true"> *</span></label>
                   <input
                     id={name}
-                    type={type}
+                    type="text"
+                    placeholder={placeholder}
                     aria-invalid={Boolean(error)}
                     aria-describedby={error ? `${name}-error` : undefined}
-                    {...register(name, type === 'number' ? { valueAsNumber: true } : undefined)}
+                    {...register(name)}
                   />
                   {error && <span className="field-error" id={`${name}-error`} role="alert">{error.message}</span>}
                 </div>

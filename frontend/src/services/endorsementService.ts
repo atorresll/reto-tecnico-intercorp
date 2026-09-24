@@ -23,7 +23,14 @@ export function createEndorsementService(
         body: JSON.stringify(endorsement),
       });
       if (!response.ok) {
-        throw new Error(`No se pudo traducir el endoso (${response.status})`);
+        let message = `No se pudo traducir el endoso (${response.status})`;
+        try {
+          const errorBody = await response.json() as { message?: string };
+          if (errorBody.message) message = errorBody.message;
+        } catch {
+          // Preserve the HTTP status when the gateway does not return JSON.
+        }
+        throw new Error(message);
       }
       return response.json();
     },
