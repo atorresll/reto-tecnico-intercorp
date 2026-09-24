@@ -34,7 +34,7 @@ jobs:
           VITE_COGNITO_USER_POOL_CLIENT_ID: ${{ vars.VITE_COGNITO_USER_POOL_CLIENT_ID }}
           VITE_AWS_REGION: ${{ secrets.AWS_REGION }}
 
-      - name: Install infrastructure dependencies and deploy CDK
+      - name: Build infrastructure and deploy CDK
         run: |
           npm run build:infra
           npx cdk deploy --all --require-approval never
