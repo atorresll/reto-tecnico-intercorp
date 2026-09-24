@@ -2,6 +2,11 @@ import type { Request, ResponseToolkit } from '@hapi/hapi';
 import { z } from 'zod';
 import type { EndorsementRequest } from '../entity/endorsement.entity';
 import { EndorsementService } from '../service/endorsement.service';
+import { MappingNotFoundError } from '../repository/mapping.repository';
+import {
+  InvalidMappingTemplateError,
+  MissingTemplateFieldsError,
+} from '../service/endorsement.service';
 
 const requestSchema = z.object({
   policyNumber: z.string().min(10).regex(/^[a-zA-Z0-9]+$/),
@@ -36,9 +41,22 @@ export function createEndorsementController(service: EndorsementService) {
         ['error', 'endorsement'],
         executionError.message,
       );
-      return h.response({
-        message: 'Error al procesar el endoso o registro no encontrado',
-      }).code(400);
+      if (error instanceof MappingNotFoundError) {
+        return h.response({ error: error.message }).code(404);
+      }
+      if (error instanceof InvalidMappingTemplateError) {
+        return h.response({
+          error: 'PlantillaInvalida',
+          message: error.message,
+        }).code(422);
+      }
+      if (error instanceof MissingTemplateFieldsError) {
+        return h.response({
+          error: 'CamposRequeridosFaltantes',
+          message: error.message,
+        }).code(400);
+      }
+      return h.response({ error: 'Error al procesar el endoso' }).code(500);
     }
   };
 }

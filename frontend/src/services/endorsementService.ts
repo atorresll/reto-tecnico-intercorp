@@ -10,16 +10,29 @@ export interface EndorsementService {
 
 export function createEndorsementService(
   tokenProvider: SessionTokenProvider,
-  apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '',
+  apiBaseUrl = import.meta.env.VITE_API_URL ?? import.meta.env.VITE_API_BASE_URL ?? '',
 ): EndorsementService {
   return {
     async translate(endorsement) {
-      const token = await tokenProvider.getIdToken();
-      if (!token) throw new Error('La sesión de Cognito no contiene un token válido');
-
-      const response = await fetch(`${apiBaseUrl}/endorse/translate`, {
+      let token: string | undefined;
+      try {
+        token = await tokenProvider.getIdToken();
+      } catch (error) {
+        console.warn(
+          'Cognito no está disponible; se intentará la petición local sin token.',
+          error instanceof Error ? error.message : error,
+        );
+        token = localStorage.getItem('idToken') ?? localStorage.getItem('token') ?? undefined;
+      }
+      const isLocalApi = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?(?:\/|$)/.test(apiBaseUrl);
+      if (!token && !isLocalApi) {
+        throw new Error('La sesión de Cognito no contiene un token válido');
+      }
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers.Authorization = `Bearer ${token}`;
+      const response = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/endorse/translate`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers,
         body: JSON.stringify(endorsement),
       });
       if (!response.ok) {
