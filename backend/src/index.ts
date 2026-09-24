@@ -22,6 +22,16 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'OPTIONS,POST,GET',
 };
 
+function withCorsHeaders(response: APIGatewayProxyResult): APIGatewayProxyResult {
+  return {
+    ...response,
+    headers: {
+      ...(response.headers ?? {}),
+      ...corsHeaders,
+    },
+  };
+}
+
 const server = new Server({ port: 0 });
 registerEndorsementRoutes(server, new DynamoMappingRepository());
 
@@ -43,6 +53,9 @@ const initializeHandler = async () => {
       response.statusCode = result.statusCode;
       for (const [name, value] of Object.entries(result.headers)) {
         if (value !== undefined) response.setHeader(name, value);
+      }
+      for (const [name, value] of Object.entries(corsHeaders)) {
+        response.setHeader(name, value);
       }
       response.end(typeof result.result === 'string' ? result.result : JSON.stringify(result.result ?? {}));
     } catch (error) {
@@ -78,10 +91,7 @@ export const handler: APIGatewayProxyHandler = async (event, context: Context) =
     const activeHandler = expressHandler ?? await initializeHandler();
     expressHandler = activeHandler;
     const response = (await activeHandler(event, context, () => undefined)) as APIGatewayProxyResult;
-    const outgoingResponse: APIGatewayProxyResult = {
-      ...response,
-      headers: corsHeaders,
-    };
+    const outgoingResponse = withCorsHeaders(response);
     console.log('OUTGOING RESPONSE:', JSON.stringify(outgoingResponse, null, 2));
     return outgoingResponse;
   } catch (error) {
