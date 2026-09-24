@@ -1,0 +1,37 @@
+{
+  "name": "reto-tecnico-intercorp",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "build": "npm run build:frontend && npm run build:backend && npm run build:infra",
+    "build:frontend": "vite build",
+    "build:backend": "tsc --noEmit -p backend/tsconfig.json",
+    "build:infra": "tsc --noEmit -p infra/tsconfig.json",
+    "cdk": "cdk",
+    "cdk:synth": "npm run build:frontend && cdk synth",
+    "cdk:deploy": "npm run build:frontend && cdk deploy --all --require-approval never"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.840.0",
+    "@hapi/hapi": "^21.4.0",
+    "@hapi/boom": "^10.0.1",
+    "aws-amplify": "^6.15.0",
+    "aws-cdk-lib": "^2.199.0",
+    "constructs": "^10.4.2",
+    "zod": "^3.25.67",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.30",
+    "@types/aws-lambda": "^8.10.145",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^4.4.1",
+    "aws-cdk": "^2.1014.0",
+    "esbuild": "^0.25.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5"
+  }
+}
