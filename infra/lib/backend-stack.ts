@@ -18,7 +18,7 @@ export class BackendStack extends cdk.Stack {
     super(scope, id, props);
     const fn = new lambdaNode.NodejsFunction(this, 'EndorsementHandler', {
       runtime: lambda.Runtime.NODEJS_24_X,
-      entry: path.resolve(__dirname, '../../backend/src/index.ts'),
+      entry: path.resolve(__dirname, '../../backend/src/handler.ts'),
       handler: 'handler',
       timeout: cdk.Duration.seconds(15),
       memorySize: 512,
