@@ -33,8 +33,8 @@ export class BackendStack extends cdk.Stack {
       },
       defaultCorsPreflightOptions: {
         allowOrigins: apigateway.Cors.ALL_ORIGINS,
-        allowMethods: ['OPTIONS', 'POST'],
-        allowHeaders: ['Authorization', 'Content-Type'],
+        allowMethods: apigateway.Cors.ALL_METHODS,
+        allowHeaders: ['Content-Type', 'Authorization', 'X-Amz-Date', 'X-Api-Key'],
       },
     });
     const authorizer = new apigateway.CognitoUserPoolsAuthorizer(this, 'EndorsementAuthorizer', { cognitoUserPools: [props.userPool] });
@@ -42,17 +42,6 @@ export class BackendStack extends cdk.Stack {
       authorizationType: apigateway.AuthorizationType.COGNITO,
       authorizer,
     });
-    for (const [id, type] of [['Default4xx', apigateway.ResponseType.DEFAULT_4XX], ['Default5xx', apigateway.ResponseType.DEFAULT_5XX]] as const) {
-      new apigateway.GatewayResponse(this, id, {
-        restApi: api,
-        type,
-        responseHeaders: {
-          'Access-Control-Allow-Origin': "'*'",
-          'Access-Control-Allow-Headers': "'Content-Type,Authorization'",
-          'Access-Control-Allow-Methods': "'OPTIONS,POST'",
-        },
-      });
-    }
     this.apiUrl = api.url.replace(/\/$/, '');
     new cdk.CfnOutput(this, 'ApiUrl', { value: this.apiUrl });
   }
