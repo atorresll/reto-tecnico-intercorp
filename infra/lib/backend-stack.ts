@@ -1,7 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
+import * as path from 'node:path';
 import {
   aws_apigateway as apigateway,
-  aws_cognito as cognito,
   aws_dynamodb as dynamodb,
   aws_iam as iam,
   aws_lambda_nodejs as lambdaNode,
@@ -10,7 +10,7 @@ import {
 import { aws_lambda as lambda } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 
-interface BackendStackProps extends cdk.StackProps { table: dynamodb.Table; userPool: cognito.UserPool }
+interface BackendStackProps extends cdk.StackProps { table: dynamodb.Table }
 
 export class BackendStack extends cdk.Stack {
   public readonly apiUrl: string;
@@ -18,7 +18,7 @@ export class BackendStack extends cdk.Stack {
     super(scope, id, props);
     const fn = new lambdaNode.NodejsFunction(this, 'EndorsementHandler', {
       runtime: lambda.Runtime.NODEJS_24_X,
-      entry: 'backend/src/index.ts',
+      entry: path.resolve(__dirname, '../../backend/src/index.ts'),
       handler: 'handler',
       timeout: cdk.Duration.seconds(15),
       memorySize: 512,
