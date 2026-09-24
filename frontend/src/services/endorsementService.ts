@@ -24,6 +24,7 @@ export function createEndorsementService(
         );
         token = localStorage.getItem('idToken') ?? localStorage.getItem('token') ?? undefined;
       }
+      token ??= localStorage.getItem('idToken') ?? localStorage.getItem('token') ?? undefined;
       const isLocalApi = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?(?:\/|$)/.test(apiBaseUrl);
       if (!token && !isLocalApi) {
         throw new Error('La sesión de Cognito no contiene un token válido');
