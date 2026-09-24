@@ -40,9 +40,11 @@ export function createEndorsementController(service: EndorsementService) {
         .header('Access-Control-Allow-Headers', corsHeaders['Access-Control-Allow-Headers'])
         .header('Access-Control-Allow-Methods', corsHeaders['Access-Control-Allow-Methods']);
     } catch (error) {
+      const executionError = error instanceof Error ? error : new Error(String(error));
+      console.error('EXECUTION ERROR:', executionError.message, executionError.stack);
       request.server.log(
         ['error', 'endorsement'],
-        error instanceof Error ? error.message : String(error),
+        executionError.message,
       );
       return h.response({
         message: 'Error al procesar el endoso o registro no encontrado',

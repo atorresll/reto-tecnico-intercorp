@@ -24,8 +24,18 @@ export class BackendStack extends cdk.Stack {
     props.table.grantReadData(fn);
     const api = new apigateway.RestApi(this, 'EndorsementApi', {
       restApiName: 'EndorsementApi',
-      deployOptions: { stageName: 'v1', tracingEnabled: true, loggingLevel: apigateway.MethodLoggingLevel.ERROR },
-      defaultCorsPreflightOptions: { allowOrigins: apigateway.Cors.ALL_ORIGINS, allowMethods: ['POST'], allowHeaders: ['Authorization', 'Content-Type'] },
+      deployOptions: {
+        stageName: 'v1',
+        tracingEnabled: true,
+        loggingLevel: apigateway.MethodLoggingLevel.INFO,
+        dataTraceEnabled: true,
+        metricsEnabled: true,
+      },
+      defaultCorsPreflightOptions: {
+        allowOrigins: apigateway.Cors.ALL_ORIGINS,
+        allowMethods: ['OPTIONS', 'POST'],
+        allowHeaders: ['Authorization', 'Content-Type'],
+      },
     });
     const authorizer = new apigateway.CognitoUserPoolsAuthorizer(this, 'EndorsementAuthorizer', { cognitoUserPools: [props.userPool] });
     api.root.addResource('endorse').addResource('translate').addMethod('POST', new apigateway.LambdaIntegration(fn), {
