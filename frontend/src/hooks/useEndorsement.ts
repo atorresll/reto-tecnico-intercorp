@@ -10,7 +10,7 @@ export function useEndorsement(service: EndorsementService) {
   const form = useForm<EndorsementFormInput, undefined, Endorsement>({
     resolver: zodResolver(endorsementSchema),
     defaultValues: {
-      policyNumber: '', idEnvio: undefined, frecuencia: '', tipoEndoso: '', producto: '',
+      policyNumber: '', idEnvio: '', frecuencia: '', tipoEndoso: '', producto: '',
       plan: '', moneda: '', usuario: '', fechaSolicitud: '', fechaCliente: '', fechaEfectiva: '',
     },
     mode: 'onTouched',

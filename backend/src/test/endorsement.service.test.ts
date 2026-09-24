@@ -6,7 +6,7 @@ import type { Mapping } from '../model/mapping.model';
 import { EndorsementService } from '../service/endorsement.service';
 
 const input: EndorsementRequest = {
-  policyNumber: 'ABC1234567', idEnvio: 10, frecuencia: 'MENSUAL', tipoEndoso: 'CAMBIO',
+  policyNumber: 'ABC1234567', idEnvio: '10', frecuencia: 'MENSUAL', tipoEndoso: 'CAMBIO',
   producto: 'VIDA', plan: 'PLUS', moneda: 'PEN', usuario: 'user@example.com',
   fechaSolicitud: '2026-01-01', fechaCliente: '2026-01-02', fechaEfectiva: '2026-01-03',
 };
