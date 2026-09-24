@@ -7,8 +7,8 @@ import { DynamoMappingRepository } from './repository/mapping.repository';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type,Authorization',
-  'Access-Control-Allow-Methods': 'OPTIONS,POST',
+  'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token',
+  'Access-Control-Allow-Methods': 'OPTIONS,POST,GET',
 };
 
 const server = Hapi.server({ port: 0 });
@@ -52,12 +52,23 @@ const initializeHandler = async () => {
 
 export const handler: APIGatewayProxyHandler = async (event, context: Context) => {
   console.log('INCOMING EVENT:', JSON.stringify(event, null, 2));
+
+  if (event.httpMethod === 'OPTIONS') {
+    const response: APIGatewayProxyResult = {
+      statusCode: 200,
+      headers: corsHeaders,
+      body: JSON.stringify({ message: 'CORS Preflight OK' }),
+    };
+    console.log('OUTGOING RESPONSE:', JSON.stringify(response, null, 2));
+    return response;
+  }
+
   try {
     expressHandler ??= await initializeHandler();
     const response = (await expressHandler(event, context, () => undefined)) as APIGatewayProxyResult;
     const outgoingResponse: APIGatewayProxyResult = {
       ...response,
-      headers: { ...corsHeaders, ...(response.headers ?? {}) },
+      headers: { ...(response.headers ?? {}), ...corsHeaders },
     };
     console.log('OUTGOING RESPONSE:', JSON.stringify(outgoingResponse, null, 2));
     return outgoingResponse;
@@ -67,9 +78,7 @@ export const handler: APIGatewayProxyHandler = async (event, context: Context) =
     const response: APIGatewayProxyResult = {
       statusCode: 500,
       headers: corsHeaders,
-      body: JSON.stringify({
-        message: 'Error al procesar el endoso o registro no encontrado',
-      }),
+      body: JSON.stringify({ error: executionError.message }),
     };
     console.log('OUTGOING RESPONSE:', JSON.stringify(response, null, 2));
     return response;
