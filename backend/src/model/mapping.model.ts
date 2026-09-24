@@ -1,21 +1,31 @@
 export interface MappingRecord {
-  PK: string;
-  SK: string;
-  translation?: Record<string, unknown>;
-  rules?: Record<string, unknown>;
-  lists?: Record<string, string[]>;
+  PK?: string;
+  SK?: string;
+  defaults?: Record<string, unknown>;
+  dynamicDataConfig?: DynamicDataConfigItem[];
+  eventDescription?: string;
+  eventAppliedEntities?: Array<{ description: string; orderEvent: number }>;
+}
+
+export interface DynamicDataConfigItem {
+  etiqueta: string;
+  value?: unknown;
+  source?: string;
+  default?: unknown;
 }
 
 export interface Mapping {
-  translation: Record<string, unknown>;
-  rules: Record<string, unknown>;
-  lists: Record<string, string[]>;
+  defaults: Record<string, unknown>;
+  dynamicDataConfig: DynamicDataConfigItem[];
+  eventDescription: string;
+  eventAppliedEntities: Array<{ description: string; orderEvent: number }>;
 }
 
 export function toMapping(record?: MappingRecord): Mapping {
   return {
-    translation: record?.translation ?? {},
-    rules: record?.rules ?? {},
-    lists: record?.lists ?? {},
+    defaults: record?.defaults ?? {},
+    dynamicDataConfig: record?.dynamicDataConfig ?? [],
+    eventDescription: record?.eventDescription ?? '',
+    eventAppliedEntities: record?.eventAppliedEntities ?? [],
   };
 }

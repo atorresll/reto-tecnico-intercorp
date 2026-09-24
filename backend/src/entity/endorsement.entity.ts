@@ -13,11 +13,24 @@ export interface EndorsementRequest {
 }
 
 export interface EndorsementTranslation {
-  id: string;
-  status: 'translated';
   policyNumber: string;
-  idEnvio: string;
-  producto: string;
-  tipoEndoso: string;
-  translation: Record<string, unknown>;
+  idEnvio: number;
+  financialPlansEntity: { description: string };
+  currency: { description: string };
+  productEntity: { description: string };
+  eventEntity: {
+    description: string;
+    dynamicData: Array<{ etiqueta: string; value: string }>;
+  };
+  eventAppliedEntities: Array<{ description: string; orderEvent: number }>;
+  riskUnitEntities: Array<{
+    insuranceObjectEntities: Array<{
+      insuranceObjectNumber: string;
+      coverageEntities: unknown[];
+      participationEntities: unknown[];
+    }>;
+    plansEntity: { description: string };
+    riskUnitNumber: string;
+  }>;
+  participationEntities: unknown[];
 }

@@ -1,17 +1,28 @@
 import type { APIGatewayProxyEvent, APIGatewayProxyHandler, APIGatewayProxyResult, Context, Handler } from 'aws-lambda';
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import Hapi from '@hapi/hapi';
-import serverlessExpress from '@vendia/serverless-express';
+import { Server } from '@hapi/hapi';
 import { registerEndorsementRoutes } from './routes/endorsement.routes';
 import { DynamoMappingRepository } from './repository/mapping.repository';
 
+type ServerlessExpressFactory = <TEvent, TResult>(options: {
+  app: (request: IncomingMessage, response: ServerResponse) => void | Promise<void>;
+}) => Handler<TEvent, TResult>;
+
+const serverlessExpressModule = require('@vendia/serverless-express') as {
+  default?: ServerlessExpressFactory;
+} | ServerlessExpressFactory;
+const serverlessExpress: ServerlessExpressFactory =
+  typeof serverlessExpressModule === 'function'
+    ? serverlessExpressModule
+    : serverlessExpressModule.default as ServerlessExpressFactory;
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type,Authorization',
-  'Access-Control-Allow-Methods': 'OPTIONS,POST',
+  'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token',
+  'Access-Control-Allow-Methods': 'OPTIONS,POST,GET',
 };
 
-const server = Hapi.server({ port: 0 });
+const server = new Server({ port: 0 });
 registerEndorsementRoutes(server, new DynamoMappingRepository());
 
 let expressHandler: Handler<APIGatewayProxyEvent, APIGatewayProxyResult> | undefined;
@@ -64,8 +75,9 @@ export const handler: APIGatewayProxyHandler = async (event, context: Context) =
   }
 
   try {
-    expressHandler ??= await initializeHandler();
-    const response = (await expressHandler(event, context, () => undefined)) as APIGatewayProxyResult;
+    const activeHandler = expressHandler ?? await initializeHandler();
+    expressHandler = activeHandler;
+    const response = (await activeHandler(event, context, () => undefined)) as APIGatewayProxyResult;
     const outgoingResponse: APIGatewayProxyResult = {
       ...response,
       headers: corsHeaders,

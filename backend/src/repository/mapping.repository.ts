@@ -7,26 +7,42 @@ export interface MappingRepository {
   findByProductAndEndorsementType(product: string, endorsementType: string): Promise<Mapping>;
 }
 
+export class MappingNotFoundError extends Error {
+  constructor() {
+    super('No existe plantilla de mapeo para este producto y tipo de endoso');
+    this.name = 'MappingNotFoundError';
+  }
+}
+
 export class DynamoMappingRepository implements MappingRepository {
   constructor(
-    private readonly client = new DynamoDBClient({}),
+    private readonly client = new DynamoDBClient({
+      region: process.env.AWS_REGION,
+      endpoint: process.env.DYNAMODB_ENDPOINT || undefined,
+    }),
     private readonly tableName = process.env.TABLE_NAME,
   ) {
     if (!tableName) throw new Error('TABLE_NAME environment variable is required');
   }
 
   async findByProductAndEndorsementType(product: string, endorsementType: string): Promise<Mapping> {
-    const result = await this.client.send(new GetItemCommand({
-      TableName: this.tableName,
-      Key: {
-        PK: { S: `PRODUCT#${product}` },
-        SK: { S: `ENDORSEMENT#${endorsementType}` },
-      },
-      ConsistentRead: true,
+    console.log('DYNAMODB MAPPING QUERY:', JSON.stringify({
+      tableName: this.tableName,
+      product,
+      endorsementType,
     }));
-    if (!result.Item) {
-      throw new Error(`No mapping found for producto=${product}, tipoEndoso=${endorsementType}`);
+    try {
+      const result = await this.client.send(new GetItemCommand({
+        TableName: this.tableName,
+        Key: { PK: { S: product }, SK: { S: endorsementType } },
+        ConsistentRead: true,
+      }));
+      if (!result.Item) throw new MappingNotFoundError();
+      return toMapping(unmarshall(result.Item) as MappingRecord);
+    } catch (error) {
+      const executionError = error instanceof Error ? error : new Error(String(error));
+      console.error('DYNAMODB QUERY ERROR:', executionError.message, executionError.stack);
+      throw executionError;
     }
-    return toMapping(unmarshall(result.Item) as MappingRecord);
   }
 }

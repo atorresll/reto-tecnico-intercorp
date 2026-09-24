@@ -111,18 +111,17 @@ npm ci
 
 ### Backend
 
-El backend actual está preparado como entrypoint serverless en
-`backend/src/index.ts`. No existe todavía un archivo
-`backend/src/server.local.ts` ni un script `npm run dev`; por tanto, el
-siguiente comando no está disponible en el estado actual:
+El backend serverless usa `backend/src/index.ts` y cuenta con un servidor local
+Express en `backend/src/localServer.ts`. Configura `backend/.env` y ejecuta
+desde la raíz:
 
 ```bash
-cd backend
-npm install
-npm run dev
+npm run dev:backend
 ```
 
-Para validar el backend localmente mediante TypeScript:
+El servicio queda disponible en `http://localhost:3000` y acepta
+`POST /endorse/translate` y `POST /v1/endorse/translate`. Para validar el
+backend mediante TypeScript:
 
 ```bash
 npm run build:backend
