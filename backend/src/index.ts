@@ -22,13 +22,49 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'OPTIONS,POST,GET',
 };
 
+function decodeChunkedBody(body: string): string {
+  if (!/^\s*[0-9a-f]+(?:;[^\r\n]*)?\r\n/i.test(body)) return body;
+
+  let offset = 0;
+  let decoded = '';
+  while (offset < body.length) {
+    const lineEnd = body.indexOf('\r\n', offset);
+    if (lineEnd < 0) return body;
+    const sizeLine = body.slice(offset, lineEnd).split(';', 1)[0].trim();
+    const chunkSize = Number.parseInt(sizeLine, 16);
+    if (Number.isNaN(chunkSize)) return body;
+    offset = lineEnd + 2;
+    if (chunkSize === 0) return decoded;
+    decoded += body.slice(offset, offset + chunkSize);
+    offset += chunkSize;
+    if (body.slice(offset, offset + 2) !== '\r\n') return body;
+    offset += 2;
+  }
+  return decoded;
+}
+
+function normalizeJsonBody(body: unknown): string {
+  const rawBody = typeof body === 'string' ? body.trim() : JSON.stringify(body ?? {});
+  const decodedBody = decodeChunkedBody(rawBody).trim();
+  try {
+    return JSON.stringify(JSON.parse(decodedBody));
+  } catch (error) {
+    const executionError = error instanceof Error ? error : new Error(String(error));
+    console.error('INVALID JSON RESPONSE:', executionError.message);
+    return JSON.stringify({ error: 'La Lambda generó una respuesta JSON inválida' });
+  }
+}
+
 function withCorsHeaders(response: APIGatewayProxyResult): APIGatewayProxyResult {
   return {
     ...response,
     headers: {
       ...(response.headers ?? {}),
+      'Content-Type': 'application/json',
       ...corsHeaders,
     },
+    isBase64Encoded: false,
+    body: normalizeJsonBody(response.body),
   };
 }
 
@@ -57,7 +93,7 @@ const initializeHandler = async () => {
       for (const [name, value] of Object.entries(corsHeaders)) {
         response.setHeader(name, value);
       }
-      response.end(typeof result.result === 'string' ? result.result : JSON.stringify(result.result ?? {}));
+      response.end(normalizeJsonBody(result.result));
     } catch (error) {
       const executionError = error instanceof Error ? error : new Error(String(error));
       console.error('EXECUTION ERROR:', executionError.message, executionError.stack);
@@ -81,7 +117,8 @@ export const handler: APIGatewayProxyHandler = async (event, context: Context) =
     const response: APIGatewayProxyResult = {
       statusCode: 200,
       headers: corsHeaders,
-      body: JSON.stringify({ message: 'CORS Preflight OK' }),
+      isBase64Encoded: false,
+      body: normalizeJsonBody({ message: 'CORS Preflight OK' }),
     };
     console.log('OUTGOING RESPONSE:', JSON.stringify(response, null, 2));
     return response;
@@ -99,8 +136,9 @@ export const handler: APIGatewayProxyHandler = async (event, context: Context) =
     console.error('EXECUTION ERROR:', executionError.message, executionError.stack);
     const response: APIGatewayProxyResult = {
       statusCode: 500,
-      headers: corsHeaders,
-      body: JSON.stringify({ error: executionError.message }),
+      headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      isBase64Encoded: false,
+      body: normalizeJsonBody({ error: executionError.message }),
     };
     console.log('OUTGOING RESPONSE:', JSON.stringify(response, null, 2));
     return response;
