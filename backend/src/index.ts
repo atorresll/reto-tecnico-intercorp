@@ -7,8 +7,8 @@ import { DynamoMappingRepository } from './repository/mapping.repository';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token',
-  'Access-Control-Allow-Methods': 'OPTIONS,POST,GET',
+  'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+  'Access-Control-Allow-Methods': 'OPTIONS,POST',
 };
 
 const server = Hapi.server({ port: 0 });
@@ -68,7 +68,7 @@ export const handler: APIGatewayProxyHandler = async (event, context: Context) =
     const response = (await expressHandler(event, context, () => undefined)) as APIGatewayProxyResult;
     const outgoingResponse: APIGatewayProxyResult = {
       ...response,
-      headers: { ...(response.headers ?? {}), ...corsHeaders },
+      headers: corsHeaders,
     };
     console.log('OUTGOING RESPONSE:', JSON.stringify(outgoingResponse, null, 2));
     return outgoingResponse;

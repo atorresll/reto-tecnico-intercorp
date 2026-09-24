@@ -19,26 +19,16 @@ const requestSchema = z.object({
 
 export function createEndorsementController(service: EndorsementService) {
   return async (request: Request, h: ResponseToolkit) => {
-    const corsHeaders = {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Headers': 'Content-Type,Authorization',
-      'Access-Control-Allow-Methods': 'OPTIONS,POST',
-    };
     try {
       const parsed = requestSchema.safeParse(request.payload);
       if (!parsed.success) {
         return h.response({
           message: 'Payload de endoso inválido',
           details: parsed.error.flatten(),
-        }).code(400).header('Access-Control-Allow-Origin', corsHeaders['Access-Control-Allow-Origin'])
-          .header('Access-Control-Allow-Headers', corsHeaders['Access-Control-Allow-Headers'])
-          .header('Access-Control-Allow-Methods', corsHeaders['Access-Control-Allow-Methods']);
+        }).code(400);
       }
       const result = await service.translate(parsed.data as EndorsementRequest);
-      return h.response(result).code(200)
-        .header('Access-Control-Allow-Origin', corsHeaders['Access-Control-Allow-Origin'])
-        .header('Access-Control-Allow-Headers', corsHeaders['Access-Control-Allow-Headers'])
-        .header('Access-Control-Allow-Methods', corsHeaders['Access-Control-Allow-Methods']);
+      return h.response(result).code(200);
     } catch (error) {
       const executionError = error instanceof Error ? error : new Error(String(error));
       console.error('EXECUTION ERROR:', executionError.message, executionError.stack);
@@ -48,10 +38,7 @@ export function createEndorsementController(service: EndorsementService) {
       );
       return h.response({
         message: 'Error al procesar el endoso o registro no encontrado',
-      }).code(400)
-        .header('Access-Control-Allow-Origin', corsHeaders['Access-Control-Allow-Origin'])
-        .header('Access-Control-Allow-Headers', corsHeaders['Access-Control-Allow-Headers'])
-        .header('Access-Control-Allow-Methods', corsHeaders['Access-Control-Allow-Methods']);
+      }).code(400);
     }
   };
 }

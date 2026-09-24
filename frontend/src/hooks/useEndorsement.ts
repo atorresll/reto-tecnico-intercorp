@@ -10,8 +10,17 @@ export function useEndorsement(service: EndorsementService) {
   const form = useForm<EndorsementFormInput, undefined, Endorsement>({
     resolver: zodResolver(endorsementSchema),
     defaultValues: {
-      policyNumber: '', idEnvio: '', frecuencia: '', tipoEndoso: '', producto: '',
-      plan: '', moneda: '', usuario: '', fechaSolicitud: '', fechaCliente: '', fechaEfectiva: '',
+      policyNumber: '08200000049',
+      idEnvio: '5984',
+      frecuencia: 'Semestral',
+      tipoEndoso: 'CambioFrecuencia',
+      producto: 'Rumbo',
+      plan: 'PlanRumbo',
+      moneda: 'Nuevo Sol',
+      usuario: 'interface.servicios',
+      fechaSolicitud: '2025-08-27',
+      fechaCliente: '2025-08-27',
+      fechaEfectiva: '2025-09-01',
     },
     mode: 'onTouched',
   });
